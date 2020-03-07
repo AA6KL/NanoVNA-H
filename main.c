@@ -2189,11 +2189,19 @@ static const ShellCommand commands[] =
     { NULL, NULL }
 };
 
+#ifndef USE_UART
 static const ShellConfig shell_cfg1 =
 {
     .sc_channel  = (BaseSequentialStream *)&SDU1,
     .sc_commands = commands
 };
+#else
+static const ShellConfig shell_cfgSerial =
+{
+    .sc_channel  = (BaseSequentialStream *)&SD1,
+    .sc_commands = commands
+};
+#endif
 
 static const I2CConfig i2ccfg = {
   .timingr  = 0x00300506, //voodoo magic 400kHz @ HSI 8MHz
@@ -2301,7 +2309,22 @@ int main(void)
     chThdSetPriority(HIGHPRIO);
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 
+    /* Activates the serial driver using the driver default configuration.
+       */
+    #ifdef USE_UART
+    sdStart(&SD1, NULL);
+    #endif
+
     while (1) {
+      #ifdef USE_UART
+        if (1) {
+            thread_t *shelltp = chThdCreateStatic(
+                waThread2, sizeof(waThread2),
+                NORMALPRIO + 1,
+                shellThread, (void*)&shell_cfgSerial);
+            chThdWait(shelltp);               /* Waiting termination.             */
+        }
+      #else
         if (SDU1.config->usbp->state == USB_ACTIVE) {
             thread_t *shelltp = chThdCreateStatic(
                 waThread2, sizeof(waThread2),
@@ -2309,6 +2332,7 @@ int main(void)
                 shellThread, (void*)&shell_cfg1);
             chThdWait(shelltp);               /* Waiting termination.             */
         }
+      #endif
         chThdSleepMilliseconds(1000);
     }
 }

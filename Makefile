@@ -61,6 +61,12 @@ endif
 # Build global options
 ##############################################################################
 
+ifeq ($(USE_UART),TRUE)
+  USE_UART_OPT= -DUSE_UART
+else
+  USE_UART_OPT= 
+endif
+
 ifeq ($(VERSION),)
   VERSION="$(shell git describe --tags)"
 endif
@@ -232,7 +238,7 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = -DSHELL_CMD_TEST_ENABLED=FALSE -DSHELL_CMD_MEM_ENABLED=FALSE -DARM_MATH_CM0 -DVERSION=\"$(VERSION)\"
+UDEFS = -DSHELL_CMD_TEST_ENABLED=FALSE -DSHELL_CMD_MEM_ENABLED=FALSE -DARM_MATH_CM0 -DVERSION=\"$(VERSION)\" $(USE_UART_OPT)
 
 # Define ASM defines here
 UADEFS =
